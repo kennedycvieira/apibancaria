@@ -1,0 +1,55 @@
+services:
+  # 1. The Application (PHP-FPM) Service
+  app:
+    build:
+      context: .
+      dockerfile: .docker/app/Dockerfile
+    container_name: myapp_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - app-network
+
+  # 2. The Web (Nginx) Service
+  web:
+    image: nginx:alpine
+    container_name: myapp_web
+    restart: unless-stopped
+    ports:
+      - "8000:80" # Maps your host port 8000 to container port 80
+    volumes:
+      - ./:/var/www/html
+      - ./.docker/web/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+    networks:
+      - app-network
+
+  # 3. The Database (MySQL) Service
+  db:
+    image: mysql:8.0
+    container_name: myapp_db
+    restart: unless-stopped
+    ports:
+      - "3307:3306" # Changed from 33060 to 3307 to avoid conflict
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_USER: ${DB_USERNAME:-user}
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - app-network
+
+# Define the network
+networks:
+  app-network:
+    driver: bridge
+
+# Define the persistent volume for MySQL
+volumes:
+  db-data:
+    driver: local
