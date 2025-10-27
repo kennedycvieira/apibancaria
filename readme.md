@@ -9,6 +9,7 @@ Aplicação que simula operações bancárias, desenvolvida para um teste técni
 *   PHPUnit
 *   Composer
 *   Laravel
+*   nginx
 
 ## Requisitos
 
