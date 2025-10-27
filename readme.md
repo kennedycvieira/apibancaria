@@ -9,6 +9,7 @@ Aplicação que simula operações bancárias, desenvolvida para um teste técni
 *   PHPUnit
 *   Composer
 *   Laravel
+*   nginx
 
 ## Requisitos
 
@@ -95,6 +96,7 @@ Alguns testes unitários foram desenvolvidos utilizando PHPUnit e estão dispon�
 ```bash
 docker compose exec app php artisan test --coverage-html coverage-report
 ```
+Os resultados estarão na pasta coverage
 
 ## Como Encerrar a Aplicação
 
