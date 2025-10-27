@@ -56,7 +56,6 @@ class Account extends Model
     public function getAllBalances(): array
     {
         return $this->balances()
-            ->where('amount', '>', 0)
             ->get()
             ->map(fn($balance) => [
                 'currency' => $balance->currency,

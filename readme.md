@@ -90,10 +90,10 @@ curl --location 'http://localhost:8000/api/v1/balance?account_number=0001'
 
 ## Testes Unitários
 
-Alguns testes unitários foram desenvolvidos utilizando PHPUnit e estão disponíveis na pasta `tests`. Eles podem ser executados com o seguinte comando:
+Alguns testes unitários foram desenvolvidos utilizando PHPUnit e estão disponíveis na pasta `tests`. Eles podem ser executados com os seguinte comando:
 
 ```bash
-docker compose exec app php artisan test
+docker compose exec app php artisan test --coverage-html coverage-report
 ```
 
 ## Como Encerrar a Aplicação

@@ -19,7 +19,7 @@ class BancoCentralService
       $response = Http::timeout(10)->get($url); 
 
       $data = json_decode($response->body(), true);
-      $currencyList = $data['value']; // Remove o [0]
+      $currencyList = $data['value']; 
       $simbolos = array_column($currencyList, 'simbolo');
       return $simbolos;
     }

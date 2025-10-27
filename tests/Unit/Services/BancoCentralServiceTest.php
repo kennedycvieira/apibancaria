@@ -6,6 +6,7 @@ use App\Services\BancoCentralService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
+use Exception;
 
 class BancoCentralServiceTest extends TestCase
 {
@@ -22,6 +23,70 @@ class BancoCentralServiceTest extends TestCase
         $this->service->method('listaMoedas')->willReturn(['USD', 'BRL']);
 
         Cache::flush();
+    }
+
+    public function it_can_list_currencies_successfully()
+    {
+        $url = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/Moedas?$top=100&$format=json';
+        $fakeResponseData = [
+            'value' => [
+                [
+                    'simbolo' => 'AUD',
+                    'nomeFormatado' => 'Dólar australiano',
+                    'tipoMoeda' => 'A'
+                ],
+                [
+                    'simbolo' => 'CAD',
+                    'nomeFormatado' => 'Dólar canadense',
+                    'tipoMoeda' => 'A'
+                ],
+                [
+                    'simbolo' => 'EUR',
+                    'nomeFormatado' => 'Euro',
+                    'tipoMoeda' => 'B'
+                ]
+            ]
+        ];
+
+        $expectedResult = ['AUD', 'CAD', 'EUR'];
+
+        Http::fake([
+            $url => Http::response($fakeResponseData, 200)        ]);
+
+        $service = new BancoCentralService(); // 
+
+        $result = $service->listaMoedas();
+
+        $this->assertEquals($expectedResult, $result);
+
+        Http::assertSent(function ($request) use ($url) {
+            return $request->url() === $url;
+        });
+    }
+
+
+
+    public function lista_moedas_lida_com_falha_da_api()
+    {
+        $url = 'https://olinda.bcb.gov.br/olinda/servico/PTAX/versao/v1/odata/Moedas?$top=100&$format=json';
+
+        Http::fake([
+            $url => Http::response('Erro no servidor', 500)
+        ]);
+
+        $service = new BancoCentralService();
+
+        $this->expectException(\Exception::class);
+
+        $service->listaMoedas();
+    }
+
+    public function test_invalid_currency_throws_exception()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Moeda inválida: XYZ');
+
+        $this->service->getPtaxRate('XYZ');
     }
 
     public function test_get_ptax_rate_for_brl_returns_one()
@@ -87,7 +152,7 @@ class BancoCentralServiceTest extends TestCase
         ]);
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Não foi possível obter cotação PTAX');
+        $this->expectExceptionMessage('Não foi possível obter cotação PTAX para USD');
 
         $this->service->getPtaxRate('USD');
     }
@@ -136,5 +201,44 @@ class BancoCentralServiceTest extends TestCase
 
         $result = $this->service->convertFromBrl(510, 'USD');
         $this->assertEquals(100.0, $result);
+    }
+
+    public function test_verifica_moeda_valida()
+    {
+        $service = new BancoCentralService();
+        $this->assertTrue($service->verificaMoedaValida('USD'));
+        $this->assertFalse($service->verificaMoedaValida('XYZ'));
+    }
+
+    public function test_get_ptax_rate_on_weekend()
+    {
+        Http::fake([
+            '*' => Http::sequence()
+                ->push(['value' => []], 200)
+                ->push(['value' => []], 200)
+                ->push([
+                    'value' => [
+                        [
+                            'cotacaoCompra' => 5.0,
+                            'cotacaoVenda' => 5.1,
+                        ]
+                    ]
+                ], 200)
+        ]);
+
+        $rate = $this->service->getPtaxRate('USD', '10-26-2025');
+
+        $this->assertEquals(5.0, $rate['buy']);
+        $this->assertEquals(5.1, $rate['sell']);
+    }
+
+    public function test_get_ptax_rate_handles_api_error()
+    {
+        Http::fake(['*' => Http::response(null, 500)]);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Não foi possível obter cotação PTAX para USD');
+
+        $this->service->getPtaxRate('USD', '10-26-2025');
     }
 }

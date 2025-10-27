@@ -99,7 +99,7 @@ class ModelsTest extends TestCase
         $this->assertEquals(0.0, $account->getBalance('EUR'));
     }
 
-    public function test_account_get_all_balances_returns_only_positive_balances()
+    public function test_account_get_all_balances_returns_all_balances()
     {
         $account = Account::create([
             'account_number' => '0001',
@@ -121,8 +121,7 @@ class ModelsTest extends TestCase
 
         $balances = $account->getAllBalances();
         
-        $this->assertCount(1, $balances);
-        $this->assertEquals('USD', $balances[0]['currency']);
+        $this->assertCount(2, $balances);
     }
 
     public function test_balance_add_amount_increases_balance()
