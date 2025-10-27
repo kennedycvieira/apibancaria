@@ -96,6 +96,7 @@ Alguns testes unitários foram desenvolvidos utilizando PHPUnit e estão dispon�
 ```bash
 docker compose exec app php artisan test
 ```
+Os resultados estarão na pasta coverage
 
 ## Como Encerrar a Aplicação
 
